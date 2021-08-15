@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>dotnet-dotnet_listener_service-CA0C78DD-9CB3-4FE7-A1F4-2BA772245BCA</UserSecretsId>
+    <RootNamespace>dotnet_listener_service</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Cloud.Diagnostics.Common" Version="4.3.0-beta03" />
+    <PackageReference Include="Google.Cloud.Pubsub.V1" Version="2.5.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+  </ItemGroup>
+</Project>

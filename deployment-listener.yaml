@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e2e-pubsub-listener-deployment
+  labels:
+    app: e2e-pubsub-listener
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: e2e-pubsub-listener
+  template:
+    metadata:
+      labels:
+        app: e2e-pubsub-listener
+    spec:
+      containers:
+      - name: e2e-pubsub-listener
+        image: gcr.io/idoflatow-devenv/listener-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          protocol: TCP
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: e2e-web-app-service
+# spec:
+#   ports:
+#   - port: 80
+#     protocol: TCP
+#     targetPort: 80
+#   selector:
+#     app: e2e-web-app
+#   type: NodePort
+# ---
+# apiVersion: networking.k8s.io/v1beta1
+# kind: Ingress
+# metadata:
+#   name: e2e-web-app-ingress
+# spec:
+#   backend:
+#     serviceName: e2e-web-app-service
+#     servicePort: 80
