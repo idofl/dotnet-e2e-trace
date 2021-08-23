@@ -42,8 +42,7 @@ namespace dotnet_listener_service
                     logging
                         .AddConsoleFormatter<GoogleCloudConsoleFormatter, GoogleCloudConsoleFormatterOptions>(
                             options => {
-                                options.IncludeScopes = true;
-                                options.ProjectID = ProjectId;
+                                options.IncludeScopes = true;                                
                                 options.GetSpanID = () => $"{(ContextTracerManager.GetCurrentTracer().GetCurrentSpanId()):x16}";
                                 options.GetTraceID = () => {
                                     var traceId = ContextTracerManager.GetCurrentTracer()?.GetCurrentTraceId();

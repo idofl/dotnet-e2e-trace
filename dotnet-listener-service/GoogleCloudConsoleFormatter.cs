@@ -76,7 +76,7 @@ namespace Google.Cloud.Logging.Console
                     }
                     writer.WriteString("severity", GetSeverity(logEntry.LogLevel));
                     writer.WriteString("activityId", System.Diagnostics.Activity.Current?.Id);
-                    MaybeWriteTraceInformation(writer, scopeProvider);
+                    MaybeWriteTraceInformation(writer);
 
                     MaybeWriteKeyValuePairs(writer, logEntry.State, propertyName: "state");
                     MaybeWriteScopeInformation(writer, scopeProvider);
@@ -89,7 +89,7 @@ namespace Google.Cloud.Logging.Console
                 textWriter.WriteLine(Encoding.UTF8.GetString(output.GetBuffer(), 0, (int) output.Position));
             }
         }
-        private void MaybeWriteTraceInformation(Utf8JsonWriter writer, IExternalScopeProvider scopeProvider)
+        private void MaybeWriteTraceInformation(Utf8JsonWriter writer)
         {
             if (_options.GetTraceID != null)
             {

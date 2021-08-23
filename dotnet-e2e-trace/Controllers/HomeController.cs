@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using dotnet_e2e_trace.Models;
 using System.Net.Http;
 using System.Text.Json;
@@ -17,16 +18,17 @@ namespace dotnet_e2e_trace.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
-        //private HttpClient _httpClient;
+        private readonly ILogger<HomeController> _logger;        
         private readonly IHttpClientFactory _clientFactory;
-        private string ProjectId = "idoflatow-devenv";
-        private string TopicId = "e2e-test-topic";
+        private string _projectId;
+        private string _topicId;
 
-        public HomeController(ILogger<HomeController> logger, IHttpClientFactory clientFactory)
+        public HomeController(ILogger<HomeController> logger, IHttpClientFactory clientFactory, IConfiguration configuration)
         {
             _logger = logger;
             _clientFactory = clientFactory;
+            _projectId = configuration["GoogleCloud:ProjectId"];
+            _topicId = configuration["GoogleCloud:TopicId"];
         }
 
         public IActionResult Index()
@@ -68,7 +70,7 @@ namespace dotnet_e2e_trace.Controllers
 
         private async Task<string> PublishToTopic(string messageText)
 		{            
-			var topicName = new TopicName(ProjectId, TopicId);
+			var topicName = new TopicName(_projectId, _topicId);
 
 			PublisherClient publisher = PublisherClient.Create(topicName);
 

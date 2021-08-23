@@ -34,26 +34,24 @@ namespace dotnet_e2e_trace
             Google.Cloud.Diagnostics.AspNetCore.CloudTraceExtension.AddGoogleTrace(services, options =>
             //services.AddGoogleTrace(options =>
             {
-                options.ProjectId = Configuration["Tracing:ProjectId"];
+                options.ProjectId = Configuration["GoogleCloud:ProjectId"];
                 options.Options = TraceOptions.Create(
                     bufferOptions: BufferOptions.NoBuffer());
             });
             
             services.AddGoogleExceptionLogging(options =>
             {
-                options.ProjectId = Configuration["Tracing:ProjectId"];
-                options.ServiceName = Configuration["Tracing:ServiceName"];
-                options.Version = Configuration["Tracing:Version"];
+                options.ProjectId = Configuration["GoogleCloud:ProjectId"];
+                options.ServiceName = Configuration["GoogleCloud:ServiceName"];
+                options.Version = Configuration["GoogleCloud:Version"];
             });
 
             
             // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-5.0#consumption-patterns
             // No need to use AddOutgoingGoogleTraceHandler, as we rely on Activity to add the traceparent header
             services.AddHttpClient("echoService", c => 
-            {
-                c.BaseAddress = new Uri("http://localhost:8080/echo");
-                //c.BaseAddress = new Uri("https://localhost:5004/echo");
-                //c.BaseAddress = new Uri("https://us-central1-idoflatow-devenv.cloudfunctions.net/echo");
+            {                
+                c.BaseAddress = new Uri(Configuration["GoogleCloud:EchoFunctionUrl"]);
             }).AddOutgoingGoogleTraceHandler();
 
         }
@@ -61,7 +59,7 @@ namespace dotnet_e2e_trace
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddGoogle(app.ApplicationServices, Configuration["Tracing:ProjectId"]);
+            loggerFactory.AddGoogle(app.ApplicationServices, Configuration["GoogleCloud:ProjectId"]);
             app.UseGoogleExceptionLogging();
             // Use at the start of the request pipeline to ensure the entire request is traced.
             app.UseGoogleTrace();
