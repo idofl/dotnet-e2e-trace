@@ -44,6 +44,10 @@ namespace dotnet_e2e_trace.Controllers
         {
             string result;
             _logger.LogInformation("CallEcho called");
+            foreach (var header in this.Request.Headers)
+            {
+                _logger.LogInformation($"{header.Key}:{header.Value}");
+            }
 
             using (tracer.StartSpan(nameof(CallEcho) + " - Calling API"))
             {

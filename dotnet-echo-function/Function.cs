@@ -22,7 +22,7 @@ namespace dotnet_echo_function
         {
             Google.Cloud.Diagnostics.AspNetCore.CloudTraceExtension.AddGoogleTrace(services, options =>
                 {
-                    options.ProjectId = "idoflatow-devenv";
+                    options.ProjectId = Environment.GetEnvironmentVariable("GCP_PROJECT");
                     options.Options = TraceOptions.Create(
                         bufferOptions: BufferOptions.NoBuffer());
                 });
