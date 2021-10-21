@@ -1,6 +1,6 @@
 using System;
 
-namespace dotnet_e2e_trace.Models
+namespace GoogleCloudSamples.EndToEndTracing.WebApp.Models
 {
     public class ErrorViewModel
     {
