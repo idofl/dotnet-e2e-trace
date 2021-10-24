@@ -82,8 +82,8 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
                 var response = await httpClient.GetAsync("?message=Hello World");
                 result = await response.Content.ReadAsStringAsync();
 
-                model.EchoResponseHeaders = response.RequestMessage.Headers;
-                model.EchoRequestHeaders = response.Headers;
+                model.EchoRequestHeaders = response.RequestMessage.Headers;
+                model.EchoResponseHeaders = response.Headers;
 
                 WriteCollectionToLog(
                     LogLevel.Information, 
