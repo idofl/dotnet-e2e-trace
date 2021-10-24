@@ -10,7 +10,6 @@ using Google.Cloud.Diagnostics.Common;
 using Google.Cloud.PubSub.V1;
 using Google.Protobuf;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using System.Linq;
 
 namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
@@ -30,14 +29,11 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
 
         public IActionResult Index()
         {
-            foreach(var header in Request.Headers)
-            {
-                Console.WriteLine(header);
-            }
             return View();
         }
 
-        private void WriteCollectionToLog(LogLevel logLevel, IEnumerable<KeyValuePair<string, string>> collection) {
+        private void WriteCollectionToLog(LogLevel logLevel, string logTitle, IEnumerable<KeyValuePair<string, string>> collection) {
+            _logger.Log(logLevel, logTitle);
             foreach (var item in collection) {
                 _logger.Log(
                     logLevel,
@@ -46,7 +42,8 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
             }
         }
 
-        private void WriteCollectionToLog(LogLevel logLevel, IEnumerable<KeyValuePair<string, IEnumerable<string>>> collection) {
+        private void WriteCollectionToLog(LogLevel logLevel,  string logTitle, IEnumerable<KeyValuePair<string, IEnumerable<string>>> collection) {
+            _logger.Log(logLevel, logTitle);
             foreach (var item in collection) {
                 _logger.Log(
                     logLevel,
@@ -57,100 +54,103 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
 
         public async Task<IActionResult> SendEcho([FromServices] IManagedTracer tracer)
         {
-            string result;
+            _logger.LogInformation($"{nameof(SendEcho)} - Method called");
+
             var model = new SendEchoViewModel();
+            string result;
 
-            _logger.LogInformation("SendEcho called");
-            model.IncomingRequestHeaders = this.Request.Headers//.Cast<KeyValuePair<string, IEnumerable<string>>>();
-             .Select(
-                 item => new KeyValuePair<string, IEnumerable<string>>(
-                     item.Key, 
-                     item.Value));
+            // Store Trace IDs
+            model.TraceInformation = new Dictionary<string,string>{
+                {"Google TraceID",tracer.GetCurrentTraceId()},
+                {"ASPNET TraceID",Activity.Current.TraceId.ToString()}};
 
-            WriteCollectionToLog(LogLevel.Information, model.IncomingRequestHeaders);
+            // Store incoming request's headers
+            model.IncomingRequestHeaders = this.Request.Headers
+             .Select(item => new KeyValuePair<string, IEnumerable<string>>(
+                item.Key, 
+                item.Value));
 
-            using (tracer.StartSpan(nameof(SendEcho) + " - Calling API"))
+            // By default, all logs are outputted to stdout
+            WriteCollectionToLog(LogLevel.Information, "Trace IDs", model.TraceInformation);
+            WriteCollectionToLog(LogLevel.Information, "Incoming request's headers", model.IncomingRequestHeaders);
+
+            using (tracer.StartSpan(nameof(SendEcho) + " - Calling the Echo Cloud Function"))
             {
-                model.TraceInformation = new Dictionary<string,string>{
-                        {"Google TraceID:",tracer.GetCurrentTraceId()},
-                        {"ASPNET TraceID:",Activity.Current.TraceId.ToString()}
-                    };
+                _logger.LogInformation($"{nameof(SendEcho)} - Calling the Echo Cloud Function");
 
-                _logger.LogInformation("Calling Echo service");
-                WriteCollectionToLog(LogLevel.Information, model.TraceInformation);
-
-                var httpClient = _clientFactory.CreateClient("echoService");
-
-                var response = await httpClient.GetAsync("?text=test");
-
-                _logger.LogInformation("Request headers:");
-                model.EchoResponseHeaders = response.RequestMessage.Headers;
-                WriteCollectionToLog(LogLevel.Information, model.EchoResponseHeaders);
-                // foreach(var header in response.RequestMessage.Headers)
-                // {
-                //     _logger.LogInformation($"{header.Key}:{string.Join(",",header.Value)}");
-                // }
-                _logger.LogInformation("Response headers:");
-                model.EchoRequestHeaders = response.Headers;
-                WriteCollectionToLog(LogLevel.Information, model.EchoRequestHeaders);
-                // foreach(var header in response.Headers)
-                // {
-                //     _logger.LogInformation($"{header.Key}:{string.Join(",",header.Value)}");
-                // }
+                var httpClient = _clientFactory.CreateClient("EchoFunction");
+                var response = await httpClient.GetAsync("?message=Hello World");
                 result = await response.Content.ReadAsStringAsync();
 
-                //result = "hello from cloud run";
-                var messageId =  await PublishToTopic(result);
-                _logger.LogInformation($"Message '{messageId}' sent to pubsub");
-                result += " " + messageId;
+                model.EchoResponseHeaders = response.RequestMessage.Headers;
+                model.EchoRequestHeaders = response.Headers;
+
+                WriteCollectionToLog(
+                    LogLevel.Information, 
+                    $"{nameof(SendEcho)} - Echo request headers", 
+                    model.EchoResponseHeaders);
+                WriteCollectionToLog(
+                    LogLevel.Information, 
+                    $"{nameof(SendEcho)} - Echo response headers", 
+                    model.EchoRequestHeaders);
             }
-            return View("SendEcho", result);
+            
+            using (tracer.StartSpan(nameof(SendEcho) + " - Sending a message to PubSub"))
+            {
+                _logger.LogInformation($"{nameof(SendEcho)} - Sending a message to PubSub");
+
+                // Send the response from the Echo function to PubSub
+                var messageId =  await PublishToTopic(result);
+            
+                model.PubSubInformation = new Dictionary<string,string>{
+                        {"MessageID",messageId},
+                    };
+
+                _logger.LogInformation(
+                    $"{nameof(SendEcho)} - Message '{result}' sent to pubsub. Message ID is {messageId}");
+            }
+
+            return View("SendEcho", model);
         }
 
         private async Task<string> PublishToTopic(string messageText)
 		{
-			var topicName = new TopicName(_options.TopicProjectId, _options.TopicId);
-
+			var topicName = new TopicName(_options.ProjectId, _options.TopicId);
 			PublisherClient publisher = PublisherClient.Create(topicName);
 
-			// Create a message
 			var message = new PubsubMessage()
 			{
 				Data = ByteString.CopyFromUtf8(messageText)
 			};
-			message.Attributes.Add("custom-message-type", "Type1");
 
-            _logger.LogInformation("Sending message to pubsub");
+            _logger.LogInformation($"{nameof(PublishToTopic)} - Sending a message to pubsub");
             var messageId = await SendAsync(publisher, message);
+
+            // Add information about the PubSub message to the current span
+            ContextTracerManager.GetCurrentTracer().AnnotateSpan(
+                new Dictionary<string, string>(){
+                    {"pubsub/topic", publisher.TopicName.ToString()},
+                    {"pubsub/publish_time", DateTime.UtcNow.ToString()},
+                    {"pubsub/meassage_id", messageId}
+                }
+            );
+
             return messageId;
 		}
 
         public async Task<string> SendAsync(PublisherClient publisher, PubsubMessage message) 
         {
+            // Get the Trace Context value used for HTTP headers
             ITraceContext context = ContextTracerManager.GetCurrentTraceContext();
-            ITraceContext traceHeaderContext = TraceHeaderContext.Create(context.TraceId, context.SpanId ?? 0, context.ShouldTrace);
+            ITraceContext traceHeaderContext = TraceHeaderContext.Create(
+                context.TraceId, context.SpanId ?? 0, context.ShouldTrace);
             var traceContextValue = traceHeaderContext.ToString();
 
-            // Add ID/Context for both the .NET Activity and the Google Cloud Trace context
+            // Add .NET Activity and the Google Cloud Trace trace IDs
             message.Attributes.Add("custom-activity-id", Activity.Current.Id);
             message.Attributes.Add("custom-trace-context", traceContextValue);
 
-            // Add PubSub info to the span's labels
-            ContextTracerManager.GetCurrentTracer().AnnotateSpan(
-                new Dictionary<string, string>(){
-                    {"pubsub/topic", publisher.TopicName.ToString()},
-                    {"pubsub/publish_time", DateTime.UtcNow.ToString()}
-                }
-            );
-
             var messageId = await publisher.PublishAsync(message);
-
-            // Add the message ID to the span's labels
-            ContextTracerManager.GetCurrentTracer().AnnotateSpan(
-                new Dictionary<string, string>(){
-                    {"pubsub/meassage_id", messageId}
-                }
-            );
 
             return messageId;
         }

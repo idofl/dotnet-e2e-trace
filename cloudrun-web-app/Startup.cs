@@ -23,21 +23,28 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp
         {
             ConfigureServices(services);
 
-            // In production, the load balancer will inject the traceparent
-            // header with a trace ID, causing Google Trace and ASP.NET 
-            // Activity to use the same trace ID.
+            // In production, the load balancer adds the traceparent
+            // and x-cloud-trace-context headers with the same trace ID, 
+            // causing Google Trace and .NET Activity to use the same 
+            // trace ID.
             // In development the request from the browser doesn't include
-            // any tracing headers and this will each trace mechanism to 
+            // any tracing headers, causing each trace mechanism to 
             // have its own trace ID.
-            // This code applies the ASP.NET Activity trace ID to Google Trace
+            // This code runs uses either a given traceparent header
+            // or the .NET Activity trace ID to set the Google Cloud Trace
+            // Trace ID
             services.AddScoped(CustomTraceContextProvider);
             static ITraceContext CustomTraceContextProvider(IServiceProvider sp)
                 {
                     var accessor = sp.GetRequiredService<IHttpContextAccessor>();
 
+                    // Attempt to use a given traceparent header if it was provided
                     string traceId = accessor.HttpContext?.Request?.Headers["traceparent"] ??
                         accessor.HttpContext?.Request?.Headers[TraceHeaderContext.TraceHeader];
 
+                    // If the header doesn't exist, use the current Activity
+                    // trace ID (if the header exists, the header and
+                    // the Activity trace ID are the same)
                     if (traceId == null)
                     {
                         traceId = System.Diagnostics.Activity.Current.TraceId.ToHexString();
@@ -58,45 +65,32 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp
 
             // Add Tracing, Logging, and Error Reporting configuration and middleware
             services.AddGoogleDiagnosticsForAspNetCore(
-                googleCloudOptions.Diagnostics.ProjectId,
+                googleCloudOptions.ProjectId,
                 googleCloudOptions.Diagnostics.ServiceName,
                 googleCloudOptions.Diagnostics.Version,
                 TraceOptions.Create(
                     bufferOptions: BufferOptions.NoBuffer())
             );
 
-            // No need to use AddOutgoingGoogleTraceHandler, as we rely on Activity to add the `traceparent` header
             // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-5.0#consumption-patterns
-            services.AddHttpClient("echoService", c => 
+            services.AddHttpClient("EchoFunction", c => 
             {
                 c.BaseAddress = new Uri(googleCloudOptions.EchoFunctionUrl);
-            });//.AddOutgoingGoogleTraceHandler();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)//, ILoggingBuilder loggingBuilder) //ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-
-            // loggingBuilder.AddGoogle(
-            //     new LoggingServiceOptions {
-            //         ProjectId = Configuration["GoogleCloud:ProjectId"]
-            //     }
-            // );
-            //loggerFactory.AddGoogle(app.ApplicationServices, Configuration["GoogleCloud:ProjectId"]);
-
-            //app.UseGoogleExceptionLogging();
-            // Use at the start of the request pipeline to ensure the entire request is traced.
-            //app.UseGoogleTrace();
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-
             }
             else
             {
                 app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                // The default HSTS value is 30 days. You may want to change 
+                // this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 

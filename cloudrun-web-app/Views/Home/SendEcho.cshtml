@@ -1,19 +1,45 @@
-﻿@model string
+﻿@model SendEchoViewModel
 
 @{
     ViewData["Title"] = "Echo test page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Incoming request headers:</h1>
+<div>
+    <h2 class="display-4">Incoming request headers:</h2>
+        <table>
+        @foreach (var item in Model.IncomingRequestHeaders) 
+        {
+        <tr> <td>@item.Key</td><td>@string.Join(",", item.Value)</td></tr>
+        }
+        </table>
+    <h2 class="display-4">Trace IDs:</h2>
+        <table>
+        @foreach (var item in Model.TraceInformation) 
+        {
+        <tr> <td>@item.Key</td><td>@string.Join(",", item.Value)</td></tr>
+        }
+        </table>
+    <h2 class="display-4">Message to Echo service on Cloud Functions</h2>
+        <h3 class="display-4">Request headers:</h3>
+            <table>
+            @foreach (var item in Model.EchoRequestHeaders) 
+            {
+            <tr> <td>@item.Key</td><td>@string.Join(",", item.Value)</td></tr>
+            }
+            </table>
+        <h3 class="display-4">Response headers:</h3>
+            <table>
+            @foreach (var item in Model.EchoResponseHeaders) 
+            {
+            <tr> <td>@item.Key</td><td>@string.Join(",", item.Value)</td></tr>
+            }
+            </table>
 
-
-    <h1 class="display-4">Message to Echo service on Cloud Functions</h1>
-
-    <h2 class="display-4">Request headers:</h2>
-    <h2 class="display-4">Response headers:</h2>
-
-    <h1 class="display-4">Message to Pub/Sub:</h1>
-
-    <p>@this.Model</p>
+    <h2 class="display-4">Message to Pub/Sub:</h2>
+        <table>
+        @foreach (var item in Model.PubSubInformation) 
+        {
+        <tr> <td>@item.Key</td><td>@string.Join(",", item.Value)</td></tr>
+        }
+        </table>
 </div>
