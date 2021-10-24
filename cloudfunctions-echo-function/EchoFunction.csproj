@@ -6,8 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Google.Cloud.Functions.Hosting" Version="1.0.0" />
-    <PackageReference Include="Google.Cloud.Trace.V1" Version="2.2.0" />
-    <PackageReference Include="Google.Cloud.Diagnostics.AspNetCore" Version="4.3.0-beta03" />
+    <PackageReference Include="Google.Cloud.Diagnostics.AspNetCore" Version="4.3.0-beta06" />
     <None Include="appsettings*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
