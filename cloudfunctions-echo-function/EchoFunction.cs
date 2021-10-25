@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.IO;
 using System.Reflection;
 
 namespace GoogleCloudSamples.EndToEndTracing.Function
@@ -58,7 +59,11 @@ namespace GoogleCloudSamples.EndToEndTracing.Function
         /// <returns>A task representing the asynchronous operation.</returns>
         public async Task HandleAsync(HttpContext context)
         {
-            var text = context.Request.Query["message"];
+            string text;
+            using (StreamReader stream = new StreamReader(context.Request.Body))
+            {
+                text = await stream.ReadToEndAsync();
+            }
 
             _logger.LogInformation($"{nameof(HandleAsync)} - Echo function running");
             _logger.LogInformation($"{nameof(HandleAsync)} - Google TraceID: {_tracer.GetCurrentTraceId()}");

@@ -79,7 +79,7 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
                 _logger.LogInformation($"{nameof(SendEcho)} - Calling the Echo Cloud Function");
 
                 var httpClient = _clientFactory.CreateClient("EchoFunction");
-                var response = await httpClient.GetAsync("?message=Hello World");
+                var response = await httpClient.PostAsync("", new StringContent("Hello World"));
                 result = await response.Content.ReadAsStringAsync();
 
                 model.EchoRequestHeaders = response.RequestMessage.Headers;
