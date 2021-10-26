@@ -100,30 +100,6 @@ namespace Google.Cloud.Logging.Console
                 }
             }
         }
-        
-/*
-          
-        
-            scopeProvider.ForEachScope((scope, localWriter) =>
-            {
-                if (scope is IReadOnlyCollection<KeyValuePair<string, object>> stateDictionary)
-                {
-                    foreach (KeyValuePair<string, object> item in stateDictionary)
-                    {
-                        switch (item.Key.ToLower())
-                        {
-                            case "spanid":
-                                writer.WriteString("logging.googleapis.com/spanId", ToInvariantString(item.Value));
-                                break;
-                            case "traceid" :
-                                writer.WriteString("logging.googleapis.com/trace", TraceTarget.ForProject(_options.ProjectID).GetFullTraceName((string)(item.Value)));
-                                break;
-                        };
-                    }
-                }
-               
-            }, writer);
-            */
 
         private void MaybeWriteScopeInformation(Utf8JsonWriter writer, IExternalScopeProvider scopeProvider)
         {

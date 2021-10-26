@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "cloudrun-web-app\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EchoFunction", "cloudfunctions-echo-function\EchoFunction.csproj", "{8AFEFB53-F751-4C68-A079-47A1887141D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dotnet-listener-service", "dotnet-listener-service\dotnet-listener-service.csproj", "{F123E08F-C510-4D20-9A20-6373F104B3CE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PubSubListener", "pubsub-listener-service\PubSubListener.csproj", "{F123E08F-C510-4D20-9A20-6373F104B3CE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
