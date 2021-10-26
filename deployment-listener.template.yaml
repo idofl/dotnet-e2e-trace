@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: dotnet-e2e-pubsub-listener
-        image: gcr.io/idoflatow-devenv/dotnet-e2e-trace-listener-service:latest
+        image: gcr.io/$PROJECT_ID/dotnet-e2e-trace-listener-service:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
