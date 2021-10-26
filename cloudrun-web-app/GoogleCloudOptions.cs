@@ -1,5 +1,3 @@
-using Google.Cloud.Diagnostics.AspNetCore;
-
 namespace GoogleCloudSamples.EndToEndTracing.WebApp
 {
     public class GoogleCloudOptions
