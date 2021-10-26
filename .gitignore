@@ -3,3 +3,5 @@
 **/bin/
 .vscode/
 */appsettings.*.json
+cloud-functions.env.yaml
+deployment-listener.yaml
