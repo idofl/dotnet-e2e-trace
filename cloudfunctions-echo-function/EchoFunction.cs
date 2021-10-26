@@ -31,7 +31,7 @@ namespace GoogleCloudSamples.EndToEndTracing.Function
                 .Bind(googleCloudOptions);
 
             services.AddGoogleDiagnosticsForAspNetCore(
-                googleCloudOptions.ProjectId,
+                googleCloudOptions.Diagnostics.ProjectId,
                 googleCloudOptions.Diagnostics.ServiceName,
                 googleCloudOptions.Diagnostics.Version,
                 TraceOptions.Create(
