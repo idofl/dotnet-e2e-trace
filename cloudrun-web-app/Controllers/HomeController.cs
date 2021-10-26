@@ -18,7 +18,7 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly IHttpClientFactory _clientFactory;
-        private GoogleCloudOptions _options;
+        private readonly GoogleCloudOptions _options;
 
         public HomeController(ILogger<HomeController> logger, IHttpClientFactory clientFactory, IOptions<GoogleCloudOptions> options)
         {
