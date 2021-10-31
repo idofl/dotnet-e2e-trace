@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ namespace Google.Cloud.Logging.Console
 {
     /// <summary>
     /// Console formatter for use with Google Cloud Logging.
+    /// https://github.com/googleapis/google-cloud-dotnet/tree/master/apis/Google.Cloud.Logging
     /// </summary>
     public sealed class GoogleCloudConsoleFormatter : ConsoleFormatter, IDisposable
     {
@@ -63,7 +64,6 @@ namespace Google.Cloud.Logging.Console
             {
                 return;
             }
-            // TODO: Use PooledByteBufferWriter when it's public...
             using var output = new MemoryStream();
             {
                 using var writer = new Utf8JsonWriter(output);
@@ -84,11 +84,15 @@ namespace Google.Cloud.Logging.Console
                     writer.WriteEndObject();
                     writer.Flush();
                 }
-                // TODO: Even when we've got PooledByteBufferWriter available, do we really need to create a separate
-                // string like this? Should we just write directly to the TextWriter instead?
                 textWriter.WriteLine(Encoding.UTF8.GetString(output.GetBuffer(), 0, (int) output.Position));
             }
         }
+
+        /// <summary>
+        /// Write Trace and Span IDs to the log if retrieval functions
+        /// were provided.
+        /// </summary>
+        /// <param name="writer">JSON writer for output</param>
         private void MaybeWriteTraceInformation(Utf8JsonWriter writer)
         {
             if (_options.GetTraceID != null)
@@ -101,6 +105,11 @@ namespace Google.Cloud.Logging.Console
             }
         }
 
+        /// <summary>
+        /// Write scoped data to the log
+        /// </summary>
+        /// <param name="writer">JSON writer for output</param>
+        /// <param name="scopeProvider">Provider of scoped data</param>
         private void MaybeWriteScopeInformation(Utf8JsonWriter writer, IExternalScopeProvider scopeProvider)
         {
             if (!_options.IncludeScopes || scopeProvider is null)
@@ -118,6 +127,15 @@ namespace Google.Cloud.Logging.Console
             writer.WriteEndArray();
         }
 
+        /// <summary>
+        /// Write key/value pairs to the log
+        /// </summary>
+        /// <param name="writer">JSON writer for output</param>
+        /// <param name="value">Key/value pairs to log</param>
+        /// <param name="propertyName">Property to write the pairs under</param>
+        /// <returns>
+        /// True if any pairs were written to the log. False if no pairs were provided.
+        /// </returns>
         private static bool MaybeWriteKeyValuePairs<TValue>(Utf8JsonWriter writer, TValue value, string propertyName)
         {
             if (value is IReadOnlyCollection<KeyValuePair<string, object>> stateDictionary)
@@ -137,6 +155,13 @@ namespace Google.Cloud.Logging.Console
             return false;
         }
 
+        /// <summary>
+        /// Convert .NET Logging log levels to Google Cloud Logging levels
+        /// </summary>
+        /// <param name="logLevel">Log level to convert</param>
+        /// <returns>
+        /// The corresponding Google Cloud Logging log level
+        /// </returns>
         private static string GetSeverity(LogLevel logLevel) =>
             logLevel switch
             {
@@ -151,6 +176,7 @@ namespace Google.Cloud.Logging.Console
 
         void IDisposable.Dispose() => _optionsReloadToken?.Dispose();
 
-        private static string ToInvariantString(object obj) => Convert.ToString(obj, CultureInfo.InvariantCulture);
+        private static string ToInvariantString(object obj) => 
+            Convert.ToString(obj, CultureInfo.InvariantCulture);
     }
 }

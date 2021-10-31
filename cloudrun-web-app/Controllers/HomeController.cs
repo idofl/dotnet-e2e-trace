@@ -1,10 +1,24 @@
-﻿using System;
+﻿// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using GoogleCloudSamples.EndToEndTracing.WebApp.Models;
+using GoogleCloudSamples.EndToEndTracing.WebApp.ViewModels;
 using System.Net.Http;
 using Google.Cloud.Diagnostics.Common;
 using Google.Cloud.PubSub.V1;
@@ -52,6 +66,13 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
             }
         }
 
+        /// <summary>
+        /// Send request to the Echo function and then send the response
+        /// From the function to PubSub
+        /// </summary>
+        /// <param name="tracer">Managed tracer for creating child spans</param>
+        /// <returns>HTML page with metadata information about 
+        /// requests and responses</returns>
         public async Task<IActionResult> SendEcho([FromServices] IManagedTracer tracer)
         {
             _logger.LogInformation($"{nameof(SendEcho)} - Method called");
@@ -94,14 +115,14 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
                     $"{nameof(SendEcho)} - Echo response headers", 
                     model.EchoRequestHeaders);
             }
-            
+
             using (tracer.StartSpan(nameof(SendEcho) + " - Sending a message to PubSub"))
             {
                 _logger.LogInformation($"{nameof(SendEcho)} - Sending a message to PubSub");
 
                 // Send the response from the Echo function to PubSub
                 var messageId =  await PublishToTopic(result);
-            
+
                 model.PubSubInformation = new Dictionary<string,string>{
                         {"MessageID",messageId},
                     };
@@ -138,7 +159,7 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
             return messageId;
 		}
 
-        public async Task<string> SendAsync(PublisherClient publisher, PubsubMessage message) 
+        private async Task<string> SendAsync(PublisherClient publisher, PubsubMessage message) 
         {
             // Get the Trace Context value used for HTTP headers
             ITraceContext context = ContextTracerManager.GetCurrentTraceContext();
