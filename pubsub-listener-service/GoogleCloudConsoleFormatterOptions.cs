@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@ namespace Google.Cloud.Logging.Console
     /// </summary>
     public class GoogleCloudConsoleFormatterOptions : ConsoleFormatterOptions
     {
-        // TODO: Service context, labels etc
-        public string ProjectID {get;set;}
         public Func<string> GetTraceID{get; set;}
         public Func<string> GetSpanID{get;set;}
     }
