@@ -35,7 +35,7 @@ namespace GoogleCloudSamples.EndToEndTracing.PubSubListener
     public static ISpan StartSpanWithActivityTags(this IManagedTracer tracer, string name, StartSpanOptions options = null)
     {
       var span = tracer.StartSpan(name, options);
-      if (Activity.Current != null && Activity.Current.Tags != nul)
+      if (Activity.Current != null && Activity.Current.Tags != null)
       {
         span.AnnotateSpan(new Dictionary<string,string>(Activity.Current.Tags));
       }
