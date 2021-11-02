@@ -15,6 +15,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  namespace: default
   name: pubsub-listener-deployment
   labels:
     app: pubsub-listener
@@ -30,8 +31,13 @@ spec:
     spec:
       containers:
       - name: pubsub-listener
-        image: gcr.io/$PROJECT_ID/dotnet-e2e-diagnostics-listener-service:latest
+        image: gcr.io/${PROJECT_ID}/${IMAGE_NAME}:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
           protocol: TCP
+        env:
+          - name: GoogleCloud__ProjectId
+            value: "${PROJECT_ID}"
+          - name: GoogleCloud__SubscriptionId
+            value: "${SUBSCRIPTION_NAME}"
