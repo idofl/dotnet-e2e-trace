@@ -301,38 +301,6 @@ resource "null_resource" "listener_app" {
   ]
 }
 
-/*
-data "google_client_config" "google-provider-configuration" {
-  #depends_on = [
-  #  google_project_service.services
-  #]
-}
-
-provider "kubernetes" {
-  host                   = "https://${google_container_cluster.gke-cluster.endpoint}"
-  token                  = data.google_client_config.google-provider-configuration.access_token
-  cluster_ca_certificate = base64decode(
-    google_container_cluster.gke-cluster.master_auth[0].cluster_ca_certificate,
-  )
-}
-
-resource "kubernetes_manifest" "listener-app" {
-  manifest = yamldecode(
-    templatefile("${path.module}/../deployment-listener.template.yaml", {
-      PROJECT_ID = var.project_id, 
-      IMAGE_NAME = var.listener_app_image,
-      SUBSCRIPTION_NAME = "default"
-    }))
-
-  depends_on = [
-    null_resource.gcr_listener_app_docker_image,
-    null_resource.workload-idnetity-annotate,
-    google_service_account_iam_member.workload-identity,
-    google_container_cluster.gke-cluster,
-    google_pubsub_subscription_iam_binding.subscriber
-  ]
-}
-*/
 output "cloud_run_url" {
 	value = google_cloud_run_service.web-app.status[0].url
 }
