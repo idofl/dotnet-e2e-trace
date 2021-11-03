@@ -15,11 +15,11 @@ FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build-env
 WORKDIR /app
 
 # Copy csproj and restore as distinct layers
-COPY pubsub-listener-service/*.csproj ./
+COPY pubsub-listener-app/*.csproj ./
 RUN dotnet restore
 
 # Copy everything else and build
-COPY pubsub-listener-service/. ./
+COPY pubsub-listener-app/. ./
 RUN dotnet publish -c Release -o out
 
 # Build runtime imag
