@@ -24,29 +24,27 @@ locals {
         docker push gcr.io/${var.project_id}/${var.web_app_image}:latest
     EOF
 
-    listener_service_build_command = <<EOF
-        gcloud auth configure-docker --quiet --project ${var.project_id}
-        docker build -t gcr.io/${var.project_id}/${var.listener_service_image}:latest -f ../dockerfile-listener-service ../
-        docker push gcr.io/${var.project_id}/${var.listener_service_image}:latest
-    EOF
-
     workload_identity_annotate_command = <<EOF
         gcloud container clusters get-credentials ${var.cluster_name} --project ${var.project_id} --region ${var.region}
         kubectl annotate --overwrite sa -n default default iam.gke.io/gcp-service-account=${google_service_account.listener-sa.email}
+    EOF
+
+    listener_app_build_and_deploy_command = <<EOF
+        export PROJECT_ID=${var.project_id}
+        export IMAGE_NAME=${var.listener_app_image}
+
+        gcloud auth configure-docker --quiet --project $PROJECT_ID
+        docker build -t gcr.io/$PROJECT_ID/$IMAGE_NAME:latest -f ../dockerfile-listener-app ../
+        docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+
+        gcloud container clusters get-credentials ${var.cluster_name} --project $PROJECT_ID --region ${var.region}
+        envsubst < ../deployment-listener.template.yaml | kubectl apply -f -
     EOF
 }
 
 data "google_project" "project" {
   project_id = var.project_id
 }
-
-/*
-data "google_client_config" "provider" {
-  depends_on = [
-    google_project_service.services
-  ]
-}
-*/
 
 # Google Cloud services used in the tutorial
 resource "google_project_service" "services" {
@@ -163,7 +161,7 @@ resource "google_project_iam_member" "web-app-sa-iam-roles" {
 }
 
 resource "google_pubsub_topic" "echo-topic" {
-  name = var.topic_name
+  name = "echo"
 }
 
 resource "google_pubsub_topic_iam_binding" "publisher" {
@@ -224,10 +222,10 @@ resource "google_cloud_run_service_iam_member" "cloud-run-noauth" {
   member = "allUsers"
 }
 
-# Resources for the listener service on GKE
+# Resources for the listener app on GKE
 # GKE Cluster, service account, SA IAM, 
 # Workload Identity configuration, PubSub subscription and IAM,
-# build and push a docker image, and deploy the listener service
+# build and push a docker image, and deploy the listener app
 
 resource "google_container_cluster" "gke-cluster" {
   name                     = var.cluster_name
@@ -260,7 +258,7 @@ resource "google_project_iam_member" "listener-sa-iam-roles" {
 }
 
 resource "google_pubsub_subscription" "echo-subscription" {
-  name  = var.subscription_name
+  name  = "default"
   topic = google_pubsub_topic.echo-topic.name
 }
 
@@ -286,23 +284,33 @@ resource "null_resource" "workload-idnetity-annotate" {
   }
 
   depends_on = [
-    google_container_cluster.gke-cluster
+    google_container_cluster.gke-cluster,
+    google_service_account_iam_member.workload-identity
   ]
 }
 
-resource "null_resource" "gcr_listener_service_docker_image" {
+resource "null_resource" "listener_app" {
   provisioner "local-exec" {
-    command = "${local.listener_service_build_command}"
+    command = "${local.listener_app_build_and_deploy_command}"
   }
 
   depends_on = [
-    google_project_service.services["containerregistry.googleapis.com"]
+    null_resource.workload-idnetity-annotate,
+    google_project_iam_member.listener-sa-iam-roles,
+    google_pubsub_subscription_iam_binding.subscriber
   ]
 }
+
 /*
+data "google_client_config" "google-provider-configuration" {
+  #depends_on = [
+  #  google_project_service.services
+  #]
+}
+
 provider "kubernetes" {
   host                   = "https://${google_container_cluster.gke-cluster.endpoint}"
-  token                  = data.google_client_config.provider.access_token
+  token                  = data.google_client_config.google-provider-configuration.access_token
   cluster_ca_certificate = base64decode(
     google_container_cluster.gke-cluster.master_auth[0].cluster_ca_certificate,
   )
@@ -312,12 +320,12 @@ resource "kubernetes_manifest" "listener-app" {
   manifest = yamldecode(
     templatefile("${path.module}/../deployment-listener.template.yaml", {
       PROJECT_ID = var.project_id, 
-      IMAGE_NAME = var.listener_service_image,
-      SUBSCRIPTION_NAME = var.subscription_name
+      IMAGE_NAME = var.listener_app_image,
+      SUBSCRIPTION_NAME = "default"
     }))
 
   depends_on = [
-    null_resource.gcr_listener_service_docker_image,
+    null_resource.gcr_listener_app_docker_image,
     null_resource.workload-idnetity-annotate,
     google_service_account_iam_member.workload-identity,
     google_container_cluster.gke-cluster,

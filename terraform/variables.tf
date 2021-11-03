@@ -29,26 +29,14 @@ variable "web_app_image" {
   default     = "dotnet-e2e-diagnostics-web-app"
 }
 
-variable "listener_service_image" {
+variable "listener_app_image" {
   type        = string
-  description = "Image name for listener service"
-  default     = "dotnet-e2e-diagnostics-listener-service"
+  description = "Image name for listener app"
+  default     = "dotnet-e2e-diagnostics-listener-app"
 }
 
 variable "cluster_name" {
   type        = string
   description = "GKE Auto-pilot cluster name"
   default     = "cluster-1"
-}
-
-variable "topic_name" {
-  type        = string
-  description = "PubSub topic name"
-  default     = "echo"
-}
-
-variable "subscription_name" {
-  type        = string
-  description = "PubSub subscription name"
-  default     = "default"
 }

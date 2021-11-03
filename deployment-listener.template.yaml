@@ -40,4 +40,4 @@ spec:
           - name: GoogleCloud__ProjectId
             value: "${PROJECT_ID}"
           - name: GoogleCloud__SubscriptionId
-            value: "${SUBSCRIPTION_NAME}"
+            value: "default"
