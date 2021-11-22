@@ -88,6 +88,10 @@ namespace GoogleCloudSamples.EndToEndTracing.Function
             _logger.LogInformation($"{nameof(HandleAsync)} - Echo function running");
             _logger.LogInformation($"{nameof(HandleAsync)} - Google TraceID: {_tracer.GetCurrentTraceId()}");
             _logger.LogInformation($"{nameof(HandleAsync)} - Got message: {text}");
+            _logger.LogInformation($"{nameof(HandleAsync)} - Request headers:");
+            foreach (var item in context.Request.Headers) {
+                _logger.LogInformation($"{item.Key}: {item.Value}");
+            }
 
             using (_tracer.StartSpan($"{nameof(EchoFunction)}.{nameof(HandleAsync)}.Processing"))
             {

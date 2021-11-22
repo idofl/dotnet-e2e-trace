@@ -118,7 +118,7 @@ resource "google_cloudfunctions_function" "echo-function" {
   region                = var.region
   service_account_email = google_service_account.function-sa.email
   environment_variables = {
-    GoogleCloud__ProjectId = var.project_id
+    GoogleCloud__Diagnostics__ProjectId = var.project_id
     GoogleCloud__Diagnostics__ServiceName = "Echo"
     GoogleCloud__Diagnostics__Version = "1.0"
   }
