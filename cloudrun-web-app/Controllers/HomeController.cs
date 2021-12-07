@@ -109,11 +109,11 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
                 WriteCollectionToLog(
                     LogLevel.Information, 
                     $"{nameof(SendEcho)} - Echo request headers", 
-                    model.EchoResponseHeaders);
+                    model.EchoRequestHeaders);
                 WriteCollectionToLog(
                     LogLevel.Information, 
                     $"{nameof(SendEcho)} - Echo response headers", 
-                    model.EchoRequestHeaders);
+                    model.EchoResponseHeaders);
             }
 
             using (tracer.StartSpan(nameof(SendEcho) + " - Sending a message to PubSub"))
