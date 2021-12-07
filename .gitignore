@@ -5,6 +5,7 @@
 */appsettings.*.json
 cloud-functions.env.yaml
 deployment-listener.yaml
+deployment-web-app.yaml
 .terraform**
 terraform.tfstate**
 .gitignore
