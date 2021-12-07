@@ -35,17 +35,14 @@ namespace GoogleCloudSamples.EndToEndTracing.PubSubListener
     {
         private readonly ILogger<Worker> _logger;
         private readonly IServiceProvider _serviceProvider;
-        private readonly Func<ITraceContext, IManagedTracer> _tracerFactory;
         private readonly GoogleCloudOptions _options;
         public Worker(
             ILogger<Worker> logger, 
-            IServiceProvider serviceProvider, 
-            Func<ITraceContext, IManagedTracer> tracerFactory, 
+            IServiceProvider serviceProvider,
             IOptions<GoogleCloudOptions> options)
         {
             _logger = logger;
             _serviceProvider = serviceProvider;
-            _tracerFactory = tracerFactory;
             _options = options.Value;
         }
 
@@ -94,21 +91,64 @@ namespace GoogleCloudSamples.EndToEndTracing.PubSubListener
 
         private void InitializeTracingFromMessage(PubsubMessage message)
         {
+            ITraceContext context = null;
+
             // Extract trace information from the message attributes
-            string traceContextAttribute = message.Attributes["custom-trace-context"];
-            // Parse the trace context header
-            ITraceContext context = TraceHeaderContext.FromHeader(traceContextAttribute);
+            string traceContextAttribute = message.Attributes.GetValueOrDefault("custom-trace-context");
+
+            if (traceContextAttribute != null)
+            {
+                // Parse the trace context header
+                context = TraceHeaderContext.FromHeader(traceContextAttribute);
+            }
+            else
+            {
+                // Create a null trace context. This will cause
+                // the tracer factory to generate a new trace context
+                // with a random trace ID
+                context = new SimpleTraceContext(null, null, null);
+            }
+
             // Create the IManagedTracer for the current trace context
-            var tracer = _tracerFactory(context);
-            // Set current tracer for the DI when asked for IManagedTracer 
-            // in the scoped service
+            var tracerFactory = this._serviceProvider.GetRequiredService<Func<ITraceContext, IManagedTracer>>();
+            var tracer = tracerFactory(context);
+
+            // Configure the new tracer as the current tracer, to make it 
+            // available outside this method
             ContextTracerManager.SetCurrentTracer(tracer);
         }
 
         private Activity InitializeActivityFromMessage(PubsubMessage message, string operationName)
         {
-            string parentActivity = message.Attributes["custom-activity-id"];
-            return new Activity(operationName).SetParentId(parentActivity);
+            // Extract trace information from the message attributes
+            string parentActivity = message.Attributes.GetValueOrDefault("custom-activity-id");
+            Activity activity = new Activity(operationName);
+
+            if (parentActivity != null)
+            {
+                // Use the trace ID to configure the .NET Activity
+                activity.SetParentId(parentActivity);
+            }
+            else
+            {
+                var traceContext = ContextTracerManager.GetCurrentTraceContext();
+                ActivitySpanId spanId;
+                if (traceContext.SpanId.HasValue)
+                {
+                    spanId = ActivitySpanId.CreateFromString(
+                        traceContext.SpanId.Value.ToString("x"));
+                }
+                else
+                {
+                    spanId = ActivitySpanId.CreateRandom();
+                }
+                // Use the current Cloud Trace trace context
+                // to configure the .NET Activity
+                activity.SetParentId(
+                    ActivityTraceId.CreateFromString(traceContext.TraceId),
+                    spanId);
+            }
+            return activity;
         }
     }
 }

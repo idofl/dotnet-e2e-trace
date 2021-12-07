@@ -76,6 +76,7 @@ namespace Google.Cloud.Logging.Console
                     }
                     writer.WriteString("severity", GetSeverity(logEntry.LogLevel));
                     writer.WriteString("activityId", System.Diagnostics.Activity.Current?.Id);
+                    writer.WriteString("timestamp", DateTime.UtcNow);
                     MaybeWriteTraceInformation(writer);
 
                     MaybeWriteKeyValuePairs(writer, logEntry.State, propertyName: "state");
