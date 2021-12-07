@@ -21,6 +21,7 @@ using Microsoft.Extensions.Hosting;
 using Google.Cloud.Diagnostics.AspNetCore;
 using Google.Cloud.Diagnostics.Common;
 using Microsoft.AspNetCore.Http;
+using System.Diagnostics;
 
 namespace GoogleCloudSamples.EndToEndTracing.WebApp
 {
@@ -41,34 +42,55 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp
         {
             ConfigureServices(services);
 
-            // In production, the load balancer adds the traceparent
-            // and x-cloud-trace-context headers with the same trace ID, 
-            // causing Google Trace and .NET Activity to use the same 
-            // trace ID.
-            // In development the request from the browser doesn't include
-            // any tracing headers, causing each trace mechanism to 
-            // have its own trace ID.
-            // This code runs uses either a given traceparent header
-            // or the .NET Activity trace ID to set the Google Cloud Trace
-            // Trace ID
+            // When deployed to Cloud Run, every request will have
+            // a traceparent and x-cloud-trace-context headers, and 
+            // both headers will have the same value. This will cause
+            // both trace IDs to be correlated.
+            // When developing locally these headers are not added, 
+            // causing .NET Activity and Google Trace to have different
+            // trace IDs. In development, create a customized provider
+            // that initializes Google Trace with the trace ID of the 
+            // .NET Activity.
             services.AddScoped(CustomTraceContextProvider);
             static ITraceContext CustomTraceContextProvider(IServiceProvider sp)
                 {
                     var accessor = sp.GetRequiredService<IHttpContextAccessor>();
+                    var googleTraceHeader = accessor.HttpContext?.Request?.Headers[TraceHeaderContext.TraceHeader];
+                    var activityTraceHeader = accessor.HttpContext?.Request?.Headers["traceparent"];
+                    var activityTraceId = Activity.Current.TraceId.ToHexString();
+                    ITraceContext traceContext = null;
 
-                    // Attempt to use a given traceparent header if it was provided
-                    string traceId = accessor.HttpContext?.Request?.Headers["traceparent"] ??
-                        accessor.HttpContext?.Request?.Headers[TraceHeaderContext.TraceHeader];
-
-                    // If the header doesn't exist, use the current Activity
-                    // trace ID (if the header exists, the header and
-                    // the Activity trace ID are the same)
-                    if (traceId == null)
+                    if (!string.IsNullOrEmpty(googleTraceHeader))
                     {
-                        traceId = System.Diagnostics.Activity.Current.TraceId.ToHexString();
+                        // Google Trace provided, use the header to create the
+                        // trace context
+                        traceContext = TraceHeaderContext.FromHeader(googleTraceHeader);
+
+                        if (string.IsNullOrEmpty(activityTraceHeader))
+                        {
+                            // traceparent header not provided. Use Google Trace header
+                            // to set the Activity's trace ID
+                            Activity.Current.SetParentId(
+                                ActivityTraceId.CreateFromString(traceContext.TraceId),
+                                ActivitySpanId.CreateFromString(traceContext.SpanId.Value.ToString("x")));
+                        }
+                        else if (traceContext.TraceId != activityTraceId)
+                        {
+                            // Both Activity and Google Trace headers provided but have different values
+                            // override Google Trace header with that of the activity
+                            traceContext = new SimpleTraceContext(activityTraceId, null, null);
+                        }
                     }
-                    return new SimpleTraceContext(traceId, null, null);
-                }
+                    else
+                    {
+                        // Google Trace not provided. Use the Activity's trace ID
+                        // to set a new Google Trace  (if traceparent header was 
+                        // provided, Activity is already set to this value)
+                        traceContext = new SimpleTraceContext(activityTraceId, null, null); 
+                    }
+
+                    return traceContext;
+               }
         }
 
         /// <summary>
@@ -91,7 +113,7 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp
                 googleCloudOptions.ProjectId,
                 googleCloudOptions.Diagnostics.ServiceName,
                 googleCloudOptions.Diagnostics.Version,
-                TraceOptions.Create(
+                Google.Cloud.Diagnostics.Common.TraceOptions.Create(
                     bufferOptions: BufferOptions.NoBuffer())
             );
 
@@ -99,7 +121,7 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp
             services.AddHttpClient("EchoFunction", c => 
             {
                 c.BaseAddress = new Uri(googleCloudOptions.EchoFunctionUrl);
-            });
+            }).AddOutgoingGoogleTraceHandler();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
