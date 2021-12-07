@@ -33,9 +33,6 @@ spec:
       - name: pubsub-listener
         image: gcr.io/${PROJECT_ID}/${IMAGE_NAME}:latest
         imagePullPolicy: Always
-        ports:
-        - containerPort: 80
-          protocol: TCP
         env:
           - name: GoogleCloud__ProjectId
             value: "${PROJECT_ID}"
