@@ -233,6 +233,9 @@ resource "google_container_cluster" "gke-cluster" {
 
   # Enable Autopilot for this cluster
   enable_autopilot = true
+  vertical_pod_autoscaling {
+    enabled = true
+  }
 
   depends_on = [
     google_project_service.services["container.googleapis.com"]
