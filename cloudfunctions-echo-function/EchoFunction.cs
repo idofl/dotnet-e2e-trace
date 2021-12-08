@@ -14,9 +14,11 @@
 
 using Google.Cloud.Functions.Framework;
 using Google.Cloud.Functions.Hosting;
+// [START dotnet_distributed_diagnostics_function_using]
 using Google.Cloud.Diagnostics.Common;
 using Google.Cloud.Diagnostics.AspNetCore;
 using Microsoft.AspNetCore.Builder;
+// [END dotnet_distributed_diagnostics_function_using]
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using System.Threading.Tasks;
@@ -50,6 +52,7 @@ namespace GoogleCloudSamples.EndToEndTracing.Function
                 .GetSection(GoogleCloudOptions.Section)
                 .Bind(googleCloudOptions);
 
+            // [START dotnet_distributed_diagnostics_function_add_service]
             services.AddGoogleDiagnosticsForAspNetCore(
                 googleCloudOptions.Diagnostics.ProjectId,
                 googleCloudOptions.Diagnostics.ServiceName,
@@ -57,6 +60,7 @@ namespace GoogleCloudSamples.EndToEndTracing.Function
                 TraceOptions.Create(
                     bufferOptions: BufferOptions.NoBuffer())
             );
+            // [END dotnet_distributed_diagnostics_function_add_service]
         }
     }
 

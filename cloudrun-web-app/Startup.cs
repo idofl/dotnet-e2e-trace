@@ -18,8 +18,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+// [START dotnet_distributed_diagnostics_aspnet_using]
 using Google.Cloud.Diagnostics.AspNetCore;
 using Google.Cloud.Diagnostics.Common;
+// [END dotnet_distributed_diagnostics_aspnet_using]
 using Microsoft.AspNetCore.Http;
 using System.Diagnostics;
 
@@ -38,19 +40,16 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp
         /// Configre a custom trace context that will be used in 
         /// development environments.
         /// </summary>
+        // [START dotnet_distributed_diagnostics_development_trace_id]
         public void ConfigureDevelopmentServices(IServiceCollection services)
         {
             ConfigureServices(services);
 
-            // When deployed to Cloud Run, every request will have
-            // a traceparent and x-cloud-trace-context headers, and 
-            // both headers will have the same value. This will cause
-            // both trace IDs to be correlated.
-            // When developing locally these headers are not added, 
-            // causing .NET Activity and Google Trace to have different
-            // trace IDs. In development, create a customized provider
-            // that initializes Google Trace with the trace ID of the 
-            // .NET Activity.
+            // Create a customized provider to initialize both Google Trace
+            // and .NET Activity to the same trace ID. The trace ID is taken
+            // from either the traceparent or x-cloud-trace-context HTTP header
+            // with preference to the traceparent header.
+            // If both headers are missing, use the .NET Activity trace ID.
             services.AddScoped(CustomTraceContextProvider);
             static ITraceContext CustomTraceContextProvider(IServiceProvider sp)
                 {
@@ -90,8 +89,9 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp
                     }
 
                     return traceContext;
-               }
+                }
         }
+        // [END dotnet_distributed_diagnostics_development_trace_id]
 
         /// <summary>
         /// Configre the DI system with Google Cloud-related configuration
@@ -109,6 +109,7 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp
             googleCloudConfiguration.Bind(googleCloudOptions);
 
             // Add Tracing, Logging, and Error Reporting configuration and middleware
+            // [START dotnet_distributed_diagnostics_aspnet_add_service]
             services.AddGoogleDiagnosticsForAspNetCore(
                 googleCloudOptions.ProjectId,
                 googleCloudOptions.Diagnostics.ServiceName,
@@ -116,12 +117,15 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp
                 Google.Cloud.Diagnostics.Common.TraceOptions.Create(
                     bufferOptions: BufferOptions.NoBuffer())
             );
+            // [END dotnet_distributed_diagnostics_aspnet_add_service]
 
             // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/http-requests?view=aspnetcore-5.0#consumption-patterns
+            // [START dotnet_distributed_diagnostics_http_client_factory]
             services.AddHttpClient("EchoFunction", c => 
             {
                 c.BaseAddress = new Uri(googleCloudOptions.EchoFunctionUrl);
             }).AddOutgoingGoogleTraceHandler();
+            // [END dotnet_distributed_diagnostics_http_client_factory]
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

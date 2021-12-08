@@ -74,12 +74,14 @@ namespace GoogleCloudSamples.EndToEndTracing.PubSubListener
                         InitializeTracingFromMessage(message);
                         using(InitializeActivityFromMessage(message, operationName).Start())
                         {
+                            // [START dotnet_distributed_diagnostics_start_span]
                             using (ContextTracerManager.GetCurrentTracer().StartSpan($"{nameof(ExecuteAsync)}.HandleMessage"))
                             {
                                 _logger.LogInformation($"{nameof(ExecuteAsync)} - Sending message {message.MessageId} for processing");
                                 var ack = scopedProcessingService.ProcessMessage(message, stoppingToken).Result;
                                 return Task.FromResult(ack);
                             }
+                            // [END dotnet_distributed_diagnostics_start_span]
                         }
                     }
                 });
@@ -89,6 +91,7 @@ namespace GoogleCloudSamples.EndToEndTracing.PubSubListener
             _logger.LogInformation($"{nameof(ExecuteAsync)} - Subscriber stopped at: {DateTimeOffset.UtcNow}");
         }
 
+        // [START dotnet_distributed_diagnostics_pubsub_trace_receive]
         private void InitializeTracingFromMessage(PubsubMessage message)
         {
             ITraceContext context = null;
@@ -117,7 +120,9 @@ namespace GoogleCloudSamples.EndToEndTracing.PubSubListener
             // available outside this method
             ContextTracerManager.SetCurrentTracer(tracer);
         }
+        // [END dotnet_distributed_diagnostics_pubsub_trace_receive]
 
+        // [START dotnet_distributed_diagnostics_pubsub_activity_receive]
         private Activity InitializeActivityFromMessage(PubsubMessage message, string operationName)
         {
             // Extract trace information from the message attributes
@@ -150,5 +155,6 @@ namespace GoogleCloudSamples.EndToEndTracing.PubSubListener
             }
             return activity;
         }
+        // [END dotnet_distributed_diagnostics_pubsub_activity_receive]
     }
 }

@@ -16,7 +16,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+// [START dotnet_distributed_diagnostics_nonasp_using]
 using Google.Cloud.Diagnostics.Common;
+// [END dotnet_distributed_diagnostics_nonasp_using]
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -52,6 +54,7 @@ namespace GoogleCloudSamples.EndToEndTracing.PubSubListener
                     services.Configure<GoogleCloudOptions>(googleCloudConfiguration);
                     googleCloudConfiguration.Bind(_googleCloudOptions);
 
+                    // [START dotnet_distributed_diagnostics_nonasp_add_service]
                     services.AddGoogleDiagnostics(
                         _googleCloudOptions.ProjectId,
                         _googleCloudOptions.Diagnostics.ServiceName,
@@ -59,6 +62,7 @@ namespace GoogleCloudSamples.EndToEndTracing.PubSubListener
                         TraceOptions.Create(
                             bufferOptions: BufferOptions.NoBuffer())
                     );
+                    // [END dotnet_distributed_diagnostics_nonasp_add_service]
                 })
                 .ConfigureLogging((hostBuilder, logging) =>
                 {

@@ -34,12 +34,14 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
         private readonly IHttpClientFactory _clientFactory;
         private readonly GoogleCloudOptions _options;
 
+         // [START dotnet_distributed_diagnostics_ctor_ilogger]
         public HomeController(ILogger<HomeController> logger, IHttpClientFactory clientFactory, IOptions<GoogleCloudOptions> options)
         {
             _logger = logger;
             _clientFactory = clientFactory;
             _options = options.Value;
         }
+        // [END dotnet_distributed_diagnostics_ctor_ilogger]
 
         public IActionResult Index()
         {
@@ -73,9 +75,13 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
         /// <param name="tracer">Managed tracer for creating child spans</param>
         /// <returns>HTML page with metadata information about 
         /// requests and responses</returns>
+        // [START dotnet_distributed_diagnostics_aspnet_imanagedtracer]
         public async Task<IActionResult> SendEcho([FromServices] IManagedTracer tracer)
+        // [END dotnet_distributed_diagnostics_aspnet_imanagedtracer]
         {
+            // [START dotnet_distributed_diagnostics_ilogger_log]
             _logger.LogInformation($"{nameof(SendEcho)} - Method called");
+            // [END dotnet_distributed_diagnostics_ilogger_log]
 
             var model = new SendEchoViewModel();
             string result;
@@ -159,6 +165,7 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
             return messageId;
 		}
 
+        // [START dotnet_distributed_diagnostics_pubsub_trace_publish]
         private async Task<string> SendAsync(PublisherClient publisher, PubsubMessage message) 
         {
             // Get the Trace Context value used for HTTP headers
@@ -175,6 +182,7 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
 
             return messageId;
         }
+        // [END dotnet_distributed_diagnostics_pubsub_trace_publish]
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
