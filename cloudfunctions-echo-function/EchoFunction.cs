@@ -93,8 +93,10 @@ namespace GoogleCloudSamples.EndToEndTracing.Function
             _logger.LogInformation($"{nameof(HandleAsync)} - Google TraceID: {_tracer.GetCurrentTraceId()}");
             _logger.LogInformation($"{nameof(HandleAsync)} - Got message: {text}");
             _logger.LogInformation($"{nameof(HandleAsync)} - Request headers:");
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
             foreach (var item in context.Request.Headers)
             {
+                sb.AppendLine($"{item.Key}: {item.Value}");
                 _logger.LogInformation($"{item.Key}: {item.Value}");
             }
 
@@ -103,7 +105,10 @@ namespace GoogleCloudSamples.EndToEndTracing.Function
                 _logger.LogInformation($"{nameof(HandleAsync)} - Processing...");
                 await Task.Delay(100);
             }
-            await context.Response.WriteAsync(text);
+            if (text == "test")
+                await context.Response.WriteAsync(sb.ToString());
+            else
+                await context.Response.WriteAsync(text);
         }
     }
 }
