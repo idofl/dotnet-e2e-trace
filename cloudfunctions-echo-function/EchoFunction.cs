@@ -54,9 +54,9 @@ namespace GoogleCloudSamples.EndToEndTracing.Function
 
             // [START dotnet_distributed_diagnostics_function_add_service]
             services.AddGoogleDiagnosticsForAspNetCore(
-                googleCloudOptions.Diagnostics.ProjectId,
-                googleCloudOptions.Diagnostics.ServiceName,
-                googleCloudOptions.Diagnostics.Version,
+                projectId: googleCloudOptions.Diagnostics.ProjectId,
+                serviceName: googleCloudOptions.Diagnostics.ServiceName,
+                serviceVersion: googleCloudOptions.Diagnostics.Version,
                 TraceOptions.Create(
                     bufferOptions: BufferOptions.NoBuffer())
             );

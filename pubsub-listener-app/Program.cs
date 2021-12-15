@@ -56,9 +56,9 @@ namespace GoogleCloudSamples.EndToEndTracing.PubSubListener
 
                     // [START dotnet_distributed_diagnostics_nonasp_add_service]
                     services.AddGoogleDiagnostics(
-                        _googleCloudOptions.ProjectId,
-                        _googleCloudOptions.Diagnostics.ServiceName,
-                        _googleCloudOptions.Diagnostics.Version,
+                        projectId: _googleCloudOptions.ProjectId,
+                        serviceName: _googleCloudOptions.Diagnostics.ServiceName,
+                        serviceVersion: _googleCloudOptions.Diagnostics.Version,
                         TraceOptions.Create(
                             bufferOptions: BufferOptions.NoBuffer())
                     );

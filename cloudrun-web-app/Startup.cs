@@ -111,9 +111,9 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp
             // Add Tracing, Logging, and Error Reporting configuration and middleware
             // [START dotnet_distributed_diagnostics_aspnet_add_service]
             services.AddGoogleDiagnosticsForAspNetCore(
-                googleCloudOptions.ProjectId,
-                googleCloudOptions.Diagnostics.ServiceName,
-                googleCloudOptions.Diagnostics.Version,
+                projectId: googleCloudOptions.ProjectId,
+                serviceName: googleCloudOptions.Diagnostics.ServiceName,
+                serviceVersion: googleCloudOptions.Diagnostics.Version,
                 Google.Cloud.Diagnostics.Common.TraceOptions.Create(
                     bufferOptions: BufferOptions.NoBuffer())
             );
