@@ -99,20 +99,13 @@ namespace GoogleCloudSamples.EndToEndTracing.PubSubListener
             // Extract trace information from the message attributes
             string traceContextAttribute = message.Attributes.GetValueOrDefault("custom-trace-context");
 
-            if (traceContextAttribute != null)
-            {
-                // Parse the trace context header
-                context = TraceHeaderContext.FromHeader(traceContextAttribute);
-            }
-            else
-            {
-                // Create a null trace context. This will cause
-                // the tracer factory to generate a new trace context
-                // with a random trace ID
-                context = new SimpleTraceContext(null, null, null);
-            }
+            // Create a trace context based on the provided trace context
+            // If trace context is not provided, an invalid trace context 
+            // is returned. This will cause the factory to generate a new 
+            // trace ID
+            context = TraceHeaderContext.FromHeader(traceContextAttribute);
 
-            // Create the IManagedTracer for the current trace context
+            // Create the ManagedTracer for the current trace context
             var tracerFactory = this._serviceProvider.GetRequiredService<Func<ITraceContext, IManagedTracer>>();
             var tracer = tracerFactory(context);
 

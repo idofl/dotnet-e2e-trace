@@ -56,8 +56,27 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp
                     var accessor = sp.GetRequiredService<IHttpContextAccessor>();
                     var googleTraceHeader = accessor.HttpContext?.Request?.Headers[TraceHeaderContext.TraceHeader];
                     var activityTraceHeader = accessor.HttpContext?.Request?.Headers["traceparent"];
-                    var activityTraceId = Activity.Current.TraceId.ToHexString();
+                    
                     ITraceContext traceContext = null;
+                    
+                    // Sample code that initializes the trace context 
+                    // based on the traceparent header
+                    // (in case the caller did not provide the google trace header)
+                    /*
+                    if (!string.IsNullOrEmpty(activityTraceHeader)) {
+                        ActivityContext context = ActivityContext.Parse(activityTraceHeader, null);
+                        traceContext = new SimpleTraceContext(
+                            context.TraceId.ToString(), 
+                            ulong.Parse(context.SpanId.ToHexString(), System.Globalization.NumberStyles.HexNumber), 
+                            null);
+                    }
+                    else {
+                        traceContext = new SimpleTraceContext(null, null, null);
+                    }
+                    return traceContext;
+                    */
+                    
+                    var activityTraceId = Activity.Current.TraceId.ToHexString();
 
                     if (!string.IsNullOrEmpty(googleTraceHeader))
                     {

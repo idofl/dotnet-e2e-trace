@@ -168,8 +168,10 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp.Controllers
         // [START dotnet_distributed_diagnostics_pubsub_trace_publish]
         private async Task<string> SendAsync(PublisherClient publisher, PubsubMessage message) 
         {
-            // Get the Trace Context value used for HTTP headers
+            // Get the current trace context
             ITraceContext context = ContextTracerManager.GetCurrentTraceContext();
+            // Create the string representation for the trace context,
+            // using the same format used in the HTTP trace header 
             ITraceContext traceHeaderContext = TraceHeaderContext.Create(
                 context.TraceId, context.SpanId ?? 0, context.ShouldTrace);
             var traceContextValue = traceHeaderContext.ToString();

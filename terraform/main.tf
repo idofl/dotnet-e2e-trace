@@ -55,7 +55,8 @@ resource "google_project_service" "services" {
     "containerregistry.googleapis.com",
     "container.googleapis.com",
     "run.googleapis.com",
-    "cloudfunctions.googleapis.com"
+    "cloudfunctions.googleapis.com",
+    "artifactregistry.googleapis.com"
   ])
   service            = each.value
   disable_on_destroy = false

@@ -22,6 +22,9 @@ namespace GoogleCloudSamples.EndToEndTracing.WebApp
     {
         public static void Main(string[] args)
         {
+            // See https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-environment-variables#dotnet_system_net_http_
+            // DOTNET_SYSTEM_NET_HTTP_ENABLEACTIVITYPROPAGATION
+            //AppContext.SetSwitch("System.Net.Http.EnableActivityPropagation", false);
             CreateHostBuilder(args).Build().Run();
         }
 
